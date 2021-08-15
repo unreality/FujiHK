@@ -480,7 +480,7 @@ static void homeSpanEventHandler(void* handler_args, esp_event_base_t base, int3
   switch(event_id) {
     case HOMESPAN_WIFI_CONNECTING:
       pixels.clear();
-      pixels.setPixelColor(0, cOrange);
+      pixels.setPixelColor(0, cCyan);
       pixels.show();
     break;
 
