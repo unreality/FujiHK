@@ -474,9 +474,8 @@ void FujiTaskLoop(void *pvParameters){
   } 
 }
 
-static void homeSpanEventHandler(void* handler_args, esp_event_base_t base, int32_t event_id, void* event_data) {
+static void homeSpanEventHandler(int32_t event_id) {
 
-  Serial.printf("Event occurred %d\n", event_id);
   switch(event_id) {
     case HOMESPAN_WIFI_CONNECTING:
       pixels.clear();
@@ -553,7 +552,7 @@ void setup() {
   
   homeSpan.setQRID("FUJI");
   homeSpan.setControlPin(BTN_PIN);
-  homeSpan.addEventHandler(homeSpanEventHandler);
+  homeSpan.addEventCallback(homeSpanEventHandler);
   homeSpan.begin(Category::AirConditioners,"Fujitsu AirConditioner", "FUJIAC", "FUJIAC");
 
   sprintf(sn, "%08X", (uint32_t)ESP.getEfuseMac());
