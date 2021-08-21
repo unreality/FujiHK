@@ -483,8 +483,7 @@ static void homeSpanEventHandler(int32_t event_id) {
     case HOMESPAN_WIFI_CONNECTING:
       rgbLED->setColor(COLOR_ORANGE);
       if(!wifiConnecting) {
-        // rgbLED->start(250);
-        rgbLED->startPulse(2);
+        rgbLED->start(250);
         wifiConnecting = true;
       }
     break;

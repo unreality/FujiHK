@@ -1,7 +1,7 @@
 #include "NeoBlinker.h"
 
 ////////////////////////////////
-//         NeoBlinker         //
+//         Blinker            //
 ////////////////////////////////
 
 NeoBlinker::NeoBlinker(){
@@ -50,11 +50,11 @@ void NeoBlinker::taskLoop(void *pvParameters){
     }
 
     if(b->pulseMode) {
-      float brightDouble = float(b->brightness)/255;
+      float progress = float(b->brightness)/255;
 
-      newC = RgbColor( b->c.R + ((0 - b->c.R) * brightDouble),
-                      b->c.G + ((0 - b->c.G) * brightDouble),
-                      b->c.B + ((0 - b->c.B) * brightDouble));
+      newC = RgbColor(b->c.R + ((0 - b->c.R) * progress),
+                      b->c.G + ((0 - b->c.G) * progress),
+                      b->c.B + ((0 - b->c.B) * progress));
 
       b->pixels->SetPixelColor(0, newC);
 
