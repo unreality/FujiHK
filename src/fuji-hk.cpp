@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <HomeSpan.h>
-#include <Adafruit_NeoPixel.h>
+#include <NeoBlinker.h>
 #include <FujiHeatPump.h>
 
 
@@ -12,17 +12,15 @@
 #define RX_PIN 19
 #define TX_PIN 22
 
-Adafruit_NeoPixel pixels(NUM_LEDS, LED_PIN, NEO_GRB + NEO_KHZ800);
+#define COLOR_RED     162,0,0
+#define COLOR_GREEN   0,162,0
+#define COLOR_BLUE    0,0,162
+#define COLOR_MAGENTA 162,0,162
+#define COLOR_YELLOW  162,162,0
+#define COLOR_CYAN    0,168,168
+#define COLOR_ORANGE  255,115,0
+
 TaskHandle_t FujiTask; // task for handling fuji heatpump frames
-
-uint32_t cRed         = pixels.Color(162, 0, 0);
-uint32_t cGreen       = pixels.Color(0, 162, 0);
-uint32_t cBlue        = pixels.Color(0, 0, 162);
-uint32_t cMagenta     = pixels.Color(162, 0, 162);
-uint32_t cYellow      = pixels.Color(162, 162, 0);
-uint32_t cOrange      = pixels.Color(255, 162, 0);
-uint32_t cCyan        = pixels.Color(0, 162, 162);
-
 
 typedef struct FujiStatus {
     byte isBound = 0;
@@ -45,6 +43,7 @@ FujiStatus pendingState;
 byte       pendingFields = 0;
 bool       hpIsBound = false;
 bool       wifiConnected = false;
+bool       wifiConnecting = false;
 bool       needsPairing = false;
 
 SemaphoreHandle_t updateMutex;
@@ -65,6 +64,8 @@ enum class CurrentHeatingCoolerState {
 
 char sn[32];
 char acName[64];
+
+NeoBlinker *rgbLED;
 
 
 struct FujitsuHK : Service::HeaterCooler { 
@@ -476,39 +477,47 @@ void FujiTaskLoop(void *pvParameters){
 
 static void homeSpanEventHandler(int32_t event_id) {
 
+  // Serial.printf("GOT EVENT %d\n", event_id);
+
   switch(event_id) {
     case HOMESPAN_WIFI_CONNECTING:
-      pixels.clear();
-      pixels.setPixelColor(0, cCyan);
-      pixels.show();
+      rgbLED->setColor(COLOR_ORANGE);
+      if(!wifiConnecting) {
+        // rgbLED->start(250);
+        rgbLED->startPulse(2);
+        wifiConnecting = true;
+      }
     break;
 
     case HOMESPAN_WIFI_CONNECTED:
       wifiConnected = true;
-      pixels.clear();
-      pixels.setPixelColor(0, cCyan);
-      pixels.show();
+      wifiConnecting = false;
+      if(needsPairing) {
+        rgbLED->setColor(COLOR_MAGENTA);
+        rgbLED->startPulse(2);
+      } else {
+        rgbLED->setColor(COLOR_ORANGE);
+        rgbLED->on();
+      }
     break;
 
     case HOMESPAN_WIFI_DISCONNECTED:
       wifiConnected = false;
-      pixels.clear();
-      pixels.setPixelColor(0, cRed);
-      pixels.show();
+      wifiConnecting = false;
+      rgbLED->setColor(COLOR_RED);
+      rgbLED->on();
     break;
 
     case HOMESPAN_PAIRING_NEEDED:
       needsPairing = true;
-      pixels.clear();
-      pixels.setPixelColor(0, cMagenta);
-      pixels.show();
+      rgbLED->setColor(COLOR_MAGENTA);
+      rgbLED->startPulse(2);
     break;
 
     case HOMESPAN_WIFI_NEEDED:
       wifiConnected = false;
-      pixels.clear();
-      pixels.setPixelColor(0, cYellow);
-      pixels.show();
+      rgbLED->setColor(COLOR_ORANGE);
+      rgbLED->startPulse(2);
     break;
 
     case HOMESPAN_OTA_STARTED:
@@ -529,11 +538,10 @@ void setup() {
     
   Serial.begin(115200);
   Serial.print("FujitsuHK startup\n");
-
-  pixels.begin();
-  pixels.clear();
-  pixels.show();
-  pixels.setBrightness(LED_BRIGHTNESS);
+  
+  rgbLED = new NeoBlinker(LED_PIN);
+  rgbLED->off();
+  rgbLED->stop();
 
   updateMutex = xSemaphoreCreateMutex();
   pendingMutex = xSemaphoreCreateMutex();
@@ -543,7 +551,7 @@ void setup() {
                     "FujiTask",     /* name of task. */
                     10000,          /* Stack size of task */
                     NULL,           /* parameter of the task */
-                    1,              /* priority of the task */
+                    19,             /* priority of the task */
                     &FujiTask,      /* Task handle to keep track of created task */
                     0);             /* pin task to core 0 */    
 
@@ -582,13 +590,13 @@ void loop() {
   
   if(millis() - lastLEDUpdate >= 250 && wifiConnected && !needsPairing) {
 
-    pixels.clear();
     if(hpIsBound) {
-      pixels.setPixelColor(0, cGreen);
+      rgbLED->setColor(COLOR_GREEN);
+      rgbLED->on();
     } else {
-      pixels.setPixelColor(0, cRed);
+      rgbLED->setColor(COLOR_RED);
+      rgbLED->startPulse(10);
     }
-    pixels.show();
 
     lastLEDUpdate = millis();
   }
