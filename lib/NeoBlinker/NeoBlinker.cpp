@@ -150,7 +150,7 @@ void NeoBlinker::setColor(byte r, byte g, byte b) {
 void NeoBlinker::setBrightness(byte b) {
   float progress = float(b)/255;
 
-  this->c = RgbColor(this->c.R + ((0 - this->c.R) * progress),
-                     this->c.G + ((0 - this->c.G) * progress),
-                     this->c.B + ((0 - this->c.B) * progress));
+  this->c = RgbColor(this->c.R * progress,
+                     this->c.G * progress,
+                     this->c.B * progress);
 }

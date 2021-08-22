@@ -12,13 +12,14 @@
 #define RX_PIN 19
 #define TX_PIN 22
 
-#define COLOR_RED     162,0,0
-#define COLOR_GREEN   0,162,0
-#define COLOR_BLUE    0,0,162
-#define COLOR_MAGENTA 162,0,162
-#define COLOR_YELLOW  162,162,0
-#define COLOR_CYAN    0,168,168
-#define COLOR_ORANGE  255,115,0
+#define COLOR_RED       255,0,0
+#define COLOR_GREEN     0,255,0
+#define COLOR_GREEN_DIM 0,1,0
+#define COLOR_BLUE      0,0,255
+#define COLOR_MAGENTA   162,0,162
+#define COLOR_YELLOW    162,162,0
+#define COLOR_CYAN      0,168,168
+#define COLOR_ORANGE    255,115,0
 
 TaskHandle_t FujiTask; // task for handling fuji heatpump frames
 
@@ -603,10 +604,10 @@ void loop() {
     if(hpIsBound) {
       if(pendingFields) {
         rgbLED->setColor(COLOR_BLUE);
-        rgbLED->setBrightness(10);
+        rgbLED->setBrightness(2);
       } else {
         rgbLED->setColor(COLOR_GREEN);
-        rgbLED->setBrightness(10);
+        rgbLED->setBrightness(2);
       }
       rgbLED->on();
     } else {
