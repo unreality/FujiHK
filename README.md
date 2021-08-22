@@ -1,6 +1,6 @@
 Fujitsu AirConditioner Controller for HomeKit
 ----------
-Flash to an [M5Atom](https://shop.m5stack.com/collections/atom-series/products/atom-lite-esp32-development-kit), and add your Fujitsu AirConditioner (Heatpump) to your HomeKit home. Should work with most other ESP32 kits as well, but will require changes.
+Flash to an [M5Atom](https://shop.m5stack.com/collections/atom-series/products/atom-lite-esp32-development-kit), and add your Fujitsu AirConditioner (Heatpump) to your HomeKit home. Should work with most other ESP32 kits as well.
 
 Quick start
 -----------
@@ -16,16 +16,23 @@ Quick start
 
 Status LED
 ----------
-- Yellow: WiFi Details Required
-- Magenta: Waiting to pair with HomeKit
-- Cyan: WiFi Connecting/Connected
-- Red: Not bound to the indoor unit
-- Green: Bound to an indoor unit and processing frames
+- Yellow: 
+  - Pulsing: WiFi Details Required
+  - Flashing: WiFi Connecting
+  - Solid: Wifi Connected
+- Magenta:
+  - Pulsing: Waiting to pair with HomeKit
+- Blue:
+  - Solid: Update pending send
+- Red:
+  - Pulsing: Not bound to the indoor unit
+- Green: 
+  - Solid: Bound to an indoor unit and processing frames
 
 Secondary Mode
 --------------
 
-By default the controller binds to the indoor unit as a secondary controller. If you do not have an existing wall remote controller, you will need to edit the code to bind as a primary controller.
+By default the controller binds to the indoor unit as a secondary controller. If you do not have an existing wall remote controller, you will need to edit FujiHeatPump initialisation to bind as a primary controller.
 
 QR Code
 -------
@@ -37,6 +44,14 @@ You can generate a QR code to scan with Home.app by using the [QR code generator
 Example Circuit
 ---------------
 <img src="https://github.com/unreality/FujiHK/blob/master/example-circuit.png"/>
+
+Other ESP Boards
+----------------
+
+This controller should work fine on other ESP boards, with the following setup:
+- GPIO 19 - LIN RX
+- GPIO 22 - LIN TX 
+- GPIO 27 - NeoPixel Compatible LED (SK6812/WS2812C/etc)
 
 Parts Required
 --------------

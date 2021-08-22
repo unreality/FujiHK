@@ -33,10 +33,12 @@ class NeoBlinker {
   NeoBlinker(int pin, int timerNum=0);
 
   void init(int pin, int timerNum=0);
+  void start(int period, float dutyCycle=0.5);
   void start(int period, float dutyCycle, int nBlinks, int delayTime);
   void startPulse(int delayTime);
   void stop();
   void on();
   void off();
   void setColor(byte r, byte g, byte b);
+  void setBrightness(byte b);
 };

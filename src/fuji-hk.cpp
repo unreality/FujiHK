@@ -92,9 +92,7 @@ struct FujitsuHK : Service::HeaterCooler {
       FujiStatus currentState;
       
       if(xSemaphoreTake(updateMutex, ( TickType_t ) 200 ) == pdTRUE) {
-
         memcpy(&currentState, &sharedState, sizeof(FujiStatus));
-        
         xSemaphoreGive(updateMutex);
       } else {
         Serial.print("Failed to get MUTEX lock, using defaults\n"); 
@@ -165,7 +163,16 @@ struct FujitsuHK : Service::HeaterCooler {
     void loop(){
       FujiStatus currentState;
       
-      if(xSemaphoreTake( updateMutex, ( TickType_t ) 200 ) == pdTRUE) {
+      if(pendingFields) { // if there are pending updates, use those instead to avoid UI bounces
+        if(xSemaphoreTake(pendingMutex, (TickType_t) 200 ) == pdTRUE) {
+          memcpy(&currentState, &pendingState, sizeof(FujiStatus));          
+          xSemaphoreGive(pendingMutex);
+        } else {
+          Serial.printf("Failed to get MUTEX lock, skipping loop\n");
+          return;
+        }
+      }
+      else if(xSemaphoreTake( updateMutex, ( TickType_t ) 200 ) == pdTRUE) {
         memcpy(&currentState, &sharedState, sizeof(FujiStatus));
         xSemaphoreGive( updateMutex);
       } else {
@@ -513,6 +520,10 @@ static void homeSpanEventHandler(int32_t event_id) {
       rgbLED->startPulse(2);
     break;
 
+    case HOMESPAN_PAIRED:
+      needsPairing = false;
+    break;
+
     case HOMESPAN_WIFI_NEEDED:
       wifiConnected = false;
       rgbLED->setColor(COLOR_ORANGE);
@@ -590,11 +601,17 @@ void loop() {
   if(millis() - lastLEDUpdate >= 250 && wifiConnected && !needsPairing) {
 
     if(hpIsBound) {
-      rgbLED->setColor(COLOR_GREEN);
+      if(pendingFields) {
+        rgbLED->setColor(COLOR_BLUE);
+        rgbLED->setBrightness(10);
+      } else {
+        rgbLED->setColor(COLOR_GREEN);
+        rgbLED->setBrightness(10);
+      }
       rgbLED->on();
     } else {
       rgbLED->setColor(COLOR_RED);
-      rgbLED->startPulse(10);
+      rgbLED->startPulse(5);
     }
 
     lastLEDUpdate = millis();
