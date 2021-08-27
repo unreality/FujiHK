@@ -41,6 +41,8 @@ You can generate a QR code to scan with Home.app by using the [QR code generator
 
 ```#  python3 gen_qrcode 21 111-22-333 FUJI output.png```
 
+Alternatively, you can use an online QR code generator such as [the-qrcode-generator.com](https://www.the-qrcode-generator.com/), just enter the generated setup payload which is printed after you enter your custom pairing pin (eg `X-HM://00KUG4GWTFUJI`)
+
 Example Circuit
 ---------------
 <img src="https://github.com/unreality/FujiHK/blob/master/example-circuit.png"/>
