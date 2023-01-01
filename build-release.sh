@@ -1,0 +1,1 @@
+srec_cat -output fuji-hk.bin -binary ~/.platformio/packages/framework-arduinoespressif32/tools/sdk/bin/bootloader_dio_40m.bin -binary -offset 0x1000 -fill 0xff 0x0000 0x8000 .pio/build/m5stack-atom/partitions.bin -binary -offset 0x8000 -fill 0xff 0x8000 0x10000 .pio/build/m5stack-atom/firmware.bin -binary -offset 0x10000

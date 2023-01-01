@@ -5,29 +5,32 @@ Flash to an [M5Atom](https://shop.m5stack.com/collections/atom-series/products/a
 Quick start
 -----------
 
-* Clone the repository
-* Open repository in PlatformIO
-* Build and Upload
+* Download the latest release
+* Download [NodeMCU PyFlasher](https://github.com/marcelstoer/nodemcu-pyflasher)
+* Plug in your [M5Atom](https://shop.m5stack.com/collections/atom-series/products/atom-lite-esp32-development-kit)
+* Launch NodeMCU PyFlasher
+  * Set your serial port
+  * Select the downloaded .bin file as your NodeMCU firmware
+  * Select 'Dual I/O (DIO)' as Flash mode
+  * Erase flash to 'yes'
+* Click 'Flash NodeMCU'
+
+You can either use the built in SoftAP mode to configure the WiFi details and pairing key:
+* Hold down the button for 3 seconds until the LED flashes cyan quickly
+* Press the button 3 times, the LED should triple-blink
+* Hold the button for 3 seconds again to enter AP configuration mode
+* Connect to the 'Fujitsu Airconditioner XXXXXX' AP that should now be available and enter your WiFi details and setup code
+
+Or the serial monitor:
 * Open Serial Monitor
 * Enter 'S <HOMEKIT PIN>' to define the HomeKit pairing pin (eg 'S 11122333')
 * Enter 'W' to enter WiFi connection details
-* Connect the M5Atom to the AirConditioner via the 3-wire interface (see example circuit) or via the com connector on the indoor unit (will need a logic level converter)
-* Power-Cycle your air conditioner
 
-Status LED
-----------
-- Yellow: 
-  - Pulsing: WiFi Details Required
-  - Flashing: WiFi Connecting
-  - Solid: Wifi Connected
-- Magenta:
-  - Pulsing: Waiting to pair with HomeKit
-- Blue:
-  - Solid: Update pending send
-- Red:
-  - Pulsing: Not bound to the indoor unit
-- Green: 
-  - Solid: Bound to an indoor unit and processing frames
+Connect the unit:
+* Connect the M5Atom to the AirConditioner via the 3-wire interface (see example circuit) or via the com connector on the indoor unit (will need a logic level converter)
+* Power-Cycle your air conditioner. 
+  * You may need to toggle the dip switch on the Primary controller so that it 'forgets' its setup.
+
 
 Secondary Mode
 --------------

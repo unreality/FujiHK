@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <HomeSpan.h>
-#include <NeoBlinker.h>
 #include <FujiHeatPump.h>
 
 
@@ -19,6 +18,7 @@
 #define COLOR_MAGENTA   162,0,162
 #define COLOR_YELLOW    162,162,0
 #define COLOR_CYAN      0,168,168
+#define COLOR_CYAN_HSV  180,100,66
 #define COLOR_ORANGE    255,115,0
 
 TaskHandle_t FujiTask; // task for handling fuji heatpump frames
@@ -46,6 +46,7 @@ bool       hpIsBound = false;
 bool       wifiConnected = false;
 bool       wifiConnecting = false;
 bool       needsPairing = false;
+bool       inCmdMode = false;
 
 SemaphoreHandle_t updateMutex;
 SemaphoreHandle_t pendingMutex;
@@ -65,8 +66,6 @@ enum class CurrentHeatingCoolerState {
 
 char sn[32];
 char acName[64];
-
-NeoBlinker *rgbLED;
 
 
 struct FujitsuHK : Service::HeaterCooler { 
@@ -117,12 +116,6 @@ struct FujitsuHK : Service::HeaterCooler {
       
       temperatureDisplayUnits = new Characteristic::TemperatureDisplayUnits(0);
 
-//      fan = new Service::Fan();
-//      fanActive = new Characteristic::Active();
-//      
-//      currentFanState = new Characteristic::CurrentFanState(2);
-//      targetFanMode = new Characteristic::TargetFanState(1);
-
       rotationSpeed = new Characteristic::RotationSpeed(currentState.isBound ? currentState.fanMode*25 : 0);
       rotationSpeed->setRange(0,100,25);
       
@@ -163,17 +156,12 @@ struct FujitsuHK : Service::HeaterCooler {
 
     void loop(){
       FujiStatus currentState;
-      
-      if(pendingFields) { // if there are pending updates, use those instead to avoid UI bounces
-        if(xSemaphoreTake(pendingMutex, (TickType_t) 200 ) == pdTRUE) {
-          memcpy(&currentState, &pendingState, sizeof(FujiStatus));          
-          xSemaphoreGive(pendingMutex);
-        } else {
-          Serial.printf("Failed to get MUTEX lock, skipping loop\n");
-          return;
-        }
+
+      if(pendingFields) { // if there are pending updates skip the loop to avoid UI bounces
+        return;
       }
-      else if(xSemaphoreTake( updateMutex, ( TickType_t ) 200 ) == pdTRUE) {
+
+      if(xSemaphoreTake( updateMutex, ( TickType_t ) 200 ) == pdTRUE) {
         memcpy(&currentState, &sharedState, sizeof(FujiStatus));
         xSemaphoreGive( updateMutex);
       } else {
@@ -483,65 +471,6 @@ void FujiTaskLoop(void *pvParameters){
   } 
 }
 
-static void homeSpanEventHandler(int32_t event_id) {
-
-  // Serial.printf("GOT EVENT %d\n", event_id);
-
-  switch(event_id) {
-    case HOMESPAN_WIFI_CONNECTING:
-      rgbLED->setColor(COLOR_ORANGE);
-      if(!wifiConnecting) {
-        rgbLED->start(250);
-        wifiConnecting = true;
-      }
-    break;
-
-    case HOMESPAN_WIFI_CONNECTED:
-      wifiConnected = true;
-      wifiConnecting = false;
-      if(needsPairing) {
-        rgbLED->setColor(COLOR_MAGENTA);
-        rgbLED->startPulse(2);
-      } else {
-        rgbLED->setColor(COLOR_ORANGE);
-        rgbLED->on();
-      }
-    break;
-
-    case HOMESPAN_WIFI_DISCONNECTED:
-      wifiConnected = false;
-      wifiConnecting = false;
-      rgbLED->setColor(COLOR_RED);
-      rgbLED->on();
-    break;
-
-    case HOMESPAN_PAIRING_NEEDED:
-      needsPairing = true;
-      rgbLED->setColor(COLOR_MAGENTA);
-      rgbLED->startPulse(2);
-    break;
-
-    case HOMESPAN_PAIRED:
-      needsPairing = false;
-    break;
-
-    case HOMESPAN_WIFI_NEEDED:
-      wifiConnected = false;
-      rgbLED->setColor(COLOR_ORANGE);
-      rgbLED->startPulse(2);
-    break;
-
-    case HOMESPAN_OTA_STARTED:
-    break;
-
-    case HOMESPAN_AP_STARTED:
-    break;
-
-    case HOMESPAN_AP_CONNECTED:
-    break;
-  }
-}
-
 void setup() {
 
   memset(sn, 0, 32);
@@ -550,9 +479,6 @@ void setup() {
   Serial.begin(115200);
   Serial.print("FujitsuHK startup\n");
   
-  rgbLED = new NeoBlinker(LED_PIN);
-  rgbLED->off();
-  rgbLED->stop();
 
   updateMutex = xSemaphoreCreateMutex();
   pendingMutex = xSemaphoreCreateMutex();
@@ -571,7 +497,9 @@ void setup() {
   
   homeSpan.setQRID("FUJI");
   homeSpan.setControlPin(BTN_PIN);
-  homeSpan.addEventCallback(homeSpanEventHandler);
+  homeSpan.setStatusPixel(LED_PIN,COLOR_CYAN_HSV);
+  homeSpan.setStatusAutoOff(30);
+  homeSpan.setApSSID(acName);
   homeSpan.begin(Category::AirConditioners,"Fujitsu AirConditioner", "FUJIAC", "FUJIAC");
 
   sprintf(sn, "%08X", (uint32_t)ESP.getEfuseMac());
@@ -594,27 +522,6 @@ void setup() {
   Serial.print("Finished setup\n");
 }
 
-unsigned long lastLEDUpdate = 0;
-
 void loop() {
   homeSpan.poll();
-  
-  if(millis() - lastLEDUpdate >= 250 && wifiConnected && !needsPairing) {
-
-    if(hpIsBound) {
-      if(pendingFields) {
-        rgbLED->setColor(COLOR_BLUE);
-        rgbLED->setBrightness(2);
-      } else {
-        rgbLED->setColor(COLOR_GREEN);
-        rgbLED->setBrightness(2);
-      }
-      rgbLED->on();
-    } else {
-      rgbLED->setColor(COLOR_RED);
-      rgbLED->startPulse(5);
-    }
-
-    lastLEDUpdate = millis();
-  }
 }
